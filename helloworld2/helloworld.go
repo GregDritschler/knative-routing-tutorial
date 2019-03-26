@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var words = []string{"fantastic", "wonderful", "super", "crazy"}
+var words = []string{"fantastic", "wonderful", "super"}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Hello world received a request.")

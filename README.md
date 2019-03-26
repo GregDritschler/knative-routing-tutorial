@@ -25,7 +25,7 @@ Complete the following exercises in the workshop if you have not already done so
 * [Install knative and istio on your cluster](https://github.com/IBM/knative101/tree/master/workshop/exercise-3)
 
 
-## A review of Knative routes
+## Deploy the sample application
 
 Let's briefly review the Knative route resource.
 
@@ -34,45 +34,6 @@ First, a user can work with Knative in two different ways:
 * the user can manage the high-level Knative service resource and let Knative managed the underlying low-level resources
 
 For the purpose of getting started and keeping things simple, let's assume that we are using the latter approach.
-
-Knative uses a **route** to direct traffic to a specific revision (or multiple revisions) of a Knative service.
-The route contains the hostname for the service which follows this general pattern:
-<br/><br/>
-  *service name*.*namespace*.*domain*
-
-The *service name* and *namespace* are determined when the service is deployed.
-The *domain* must be configured prior to deploying the service.
-In the Knative workshop you learned how to configure Knative to use the ingress subdomain provided for your cluster.
-The ingress subdomain is a public URL providing access to your cluster. 
-Verify this configuration now.
-
-1. Get the ingress subdomain for your cluster.
-
-	```
-	ibmcloud ks cluster-get <my-cluster-name>
-	```
-
-	Example Output:
-	```
-	Ingress Subdomain:      mycluster6.us-south.containers.appdomain.cloud   
-	```
-
-2. Update the default subdomain for new Knative apps by editing the configuration:
-
-	```
-	kubectl edit cm config-domain --namespace knative-serving
-	```
-
-   Make sure that your subdomain appears under the data key as shown below.
-   ```
-   apiVersion: v1
-   data:
-     mycluster6.us-south.containers.appdomain.cloud: ""
-   kind: ConfigMap
-   ``` 
-
-
-## Deploy the sample application
 
 This lab uses a helloworld sample program that was adapted from [this sample](https://github.com/knative/docs/tree/master/docs/serving/samples/helloworld-go).
 
@@ -153,38 +114,13 @@ helloworld-go   helloworld-go.default.mycluster6.us-south.containers.appdomain.c
 ```
 
 The above output tells us that the service hostname is `helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud`.
+The hostname for the service follows this general pattern:
+<br/><br/>
+  *service name*.*namespace*.*domain*
+
+The *service name* and *namespace* were determined when the service was deployed.
+The ingress subdomain is a public URL providing access to your cluster. 
 (You may see a different name depending on what you named your cluster and where it is located.)
-At this point, routing based on this hostname is only set up inside the cluster.
-In order to make the service accessible to the outside world, it is necessary to define an ingress resource.
-We'll do that with the [ingress.yaml](ingress.yaml) file which is reproduced below.
-
-```
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: helloworld-go-ingress
-  namespace: istio-system
-spec:
-  rules:
-    - host: helloworld-go.default.<ingress_subdomain>
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: istio-ingressgateway
-              servicePort: 80
-```
-
-Note that the ingress resource must be in the same namespace as the istio-ingressgateway, istio-system.
-Kubernetes does not allow an ingress resource to cross namespaces for security reasons.
-
-You must edit the ingress.yaml file to replace <ingress_subdomain> with your ingress subdomain.
-
-Apply the ingress.yaml file to your cluster.
-
-```
-kubectl apply -f ingress.yaml
-```
 
 Now you can curl the helloworld application.  Substitute your service name in the curl command below.
 
@@ -351,34 +287,18 @@ These subdomains have been added:
 * `latest`, , which routes to the latest revision of the service (happens to also helloworld-go-00002 in this case)
 
 You can use these hostnames if you need to try out a specific revision.
-However since we did not configure the external ingress to use these names, 
-you have to send the requests to the istio ingress gateway instead.
-You can find the address of this gateway using this command.
 
 ```
-kubectl get svc istio-ingressgateway --namespace istio-system
-```
-
-This will produce output similar to this.
-
-```
-NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)                                                                                                                   AGE
-istio-ingressgateway   LoadBalancer   172.21.158.230   169.xx.yy.zz   80:31380/TCP,443:31390/TCP,31400:31400/TCP,15011:30106/TCP,8060:32664/TCP,853:31736/TCP,15030:31922/TCP,15031:30446/TCP   10d
-```
-
-Issue curl requests to the external IP address of this gateway with a host header of the service that you want to invoke.
-
-```
-$ curl -H "Host: current.helloworld-go.default.mycluster-gmd.us-east.containers.appdomain.cloud" 169.xx.yy.zz
+$ curl current.helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
 Hello Go Sample v1!
-$ curl -H "Host: candidate.helloworld-go.default.mycluster-gmd.us-east.containers.appdomain.cloud" 169.xx.yy.zz
+$ curl candidate.helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
 Hello and have a super day!
 ```
 
 What if you discover during your roll out testing that there's something wrong with the new revision of your service and you don't want to route users to it.
-In that case you can edit the service yaml, change the rolloutPercent to 0, and apply it again.
+In that case you can edit the service yaml, change the `rolloutPercent` to 0, and apply it again.
 All traffic will be routed to the first revision in the revision list.
 
 What if testing went well and you want to route all users to the new revision?
-In that case you can edit the service yaml, change the "release" key to "runLatest", and apply it again.
+In that case you can edit the service yaml, change the `revisions` list to contain only the latest revision, and apply it again.
 All traffic will be routed to the latest revision of the service.
