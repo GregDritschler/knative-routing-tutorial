@@ -19,7 +19,7 @@ This lab assumes that you have completed the [Knative Workshop](https://github.c
 which introduces the basic Knative concepts and provides instructions for creating an IBM Kubernetes Service cluster and installing Knative.
 You will need the cluster to complete this lab.
 Complete the following exercises in the workshop if you have not already done so:
-* [Install developer tools](https://github.com/IBM/knative101/tree/master/workshop/exercise-0)
+* [Install developer tools (ibmcloud, kubectl, knctl)](https://github.com/IBM/knative101/tree/master/workshop/exercise-0)
 * [Create a Kubernetes cluster on IBM Cloud](https://github.com/IBM/knative101/tree/master/workshop/exercise-1)
 * [Set up your private container registry](https://github.com/IBM/knative101/tree/master/workshop/exercise-2)
 * [Install knative and istio on your cluster](https://github.com/IBM/knative101/tree/master/workshop/exercise-3)
@@ -27,9 +27,7 @@ Complete the following exercises in the workshop if you have not already done so
 
 ## Deploy the sample application
 
-Let's briefly review the Knative route resource.
-
-First, a user can work with Knative in two different ways:
+A user can work with Knative in two different ways:
 * the user can manage the low-level Knative resources (route, configuration, etc.) directly, or
 * the user can manage the high-level Knative service resource and let Knative managed the underlying low-level resources
 
@@ -92,8 +90,7 @@ The yaml file uses kanako to build the application from source code in the git r
 Then it pulls the container from the registry to run it.
 
 You must edit the helloworld1.yaml file to point to your own container registry namespace by replacing instances of <NAMESPACE> with the container registry namespace you created in the Knative lab.
-
-Apply the service.yaml file to your cluster.
+After you do that, apply the helloworld1.yaml file to your cluster.
 
 ```
 kubectl apply -f helloworld1.yaml
@@ -113,14 +110,18 @@ NAME            DOMAIN                                                          
 helloworld-go   helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud   helloworld-go-00001   helloworld-go-00001   True      
 ```
 
-The above output tells us that the service hostname is `helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud`.
+The above output tells us that the service hostname is
+<br/><br/>
+&nbsp;&nbsp;`helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud`.
 The hostname for the service follows this general pattern:
 <br/><br/>
-  *service name*.*namespace*.*domain*
+&nbsp;&nbsp;*service-name*.*service-namespace*.*domain*
 
-The *service name* and *namespace* were determined when the service was deployed.
+The *service name* and *service-namespace* are determined from the service yaml file.
+In this case the yaml did not specify a namespace and so the `default` namespace is used.
+
 The ingress subdomain is a public URL providing access to your cluster. 
-(You may see a different name depending on what you named your cluster and where it is located.)
+You may see a different name depending on what you named your cluster and where it is located.
 
 Now you can curl the helloworld application.  Substitute your service name in the curl command below.
 
@@ -184,7 +185,8 @@ The release mode lets us provide the following:
 In this case we want to divide traffic between the previous revision `helloworld-go-00001` and the new revision we're creating `helloworld-go-00002`.
 * A percentage of traffic to route to the second revision in the above list.  In this case we're directing 50% of the traffic to the new revision.
 
-Go ahead and deploy this service.
+You must edit the helloworld2.yaml file to point to your own container registry namespace by replacing instances of <NAMESPACE> with the container registry namespace you created in the Knative lab.
+After you do that, apply the helloworld2.yaml file to your cluster.
 
 ```
 kubectl apply -f helloworld2.yaml
@@ -202,10 +204,10 @@ You should see something like this:
 ```
 Routes in namespace 'default'
 
-Name           Domain                                                                  Traffic                     Annotations  Conditions  Age
-helloworld-go  helloworld-go.default.mycluster-gmd.us-east.containers.appdomain.cloud  50% -> helloworld-go-00001  -            3 OK / 3    15m
-                                                                                       50% -> helloworld-go-00002
-                                                                                       0% -> helloworld-go
+Name           Domain                                                                Traffic                     Annotations  Conditions  Age
+helloworld-go  helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud  50% -> helloworld-go-00001  -            3 OK / 3    15m
+                                                                                     50% -> helloworld-go-00002
+                                                                                     0% -> helloworld-go
 ```
 
 Try using curl again several times and you should see the response you saw from the first version and some new responses.
@@ -284,7 +286,7 @@ Ready               True     1h  -       -
 These subdomains have been added:
 * `current`, which routes to the first revision in the revision list (helloworld-go-00001 in this case)
 * `candidate`, which routes to the second revision in the revision list (helloworld-go-00002 in this case)
-* `latest`, , which routes to the latest revision of the service (happens to also helloworld-go-00002 in this case)
+* `latest`, which routes to the latest revision of the service (happens to also helloworld-go-00002 in this case)
 
 You can use these hostnames if you need to try out a specific revision.
 
@@ -295,9 +297,28 @@ $ curl candidate.helloworld-go.default.mycluster6.us-south.containers.appdomain.
 Hello and have a super day!
 ```
 
-What if you discover during your roll out testing that there's something wrong with the new revision of your service and you don't want to route users to it.
-In that case you can edit the service yaml, change the `rolloutPercent` to 0, and apply it again.
+### Roll back to an earlier version of the application
+
+What if you discover during your roll out testing that there's something wrong with the new revision of your service and you don't want to route users to it?
+In that case you can edit the service using 
+
+```
+kubectl edit ksvc helloworld-go
+```
+
+An edit window appears containing the service's current yaml definition.  Find the key `rolloutPercent` and change it to 0.  Save the file.
+
 All traffic will be routed to the first revision in the revision list.
+
+```
+$ curl helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
+Hello Go Sample v1!
+
+$ curl helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
+Hello Go Sample v1!
+```
+
+### Roll forward to latest version of the application
 
 What if testing went well and you want to route all users to the new revision?
 In that case you can edit the service yaml, change the `revisions` list to contain only the latest revision, and apply it again.
