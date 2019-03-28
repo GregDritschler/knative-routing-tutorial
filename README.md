@@ -113,6 +113,7 @@ helloworld-go   helloworld-go.default.mycluster6.us-south.containers.appdomain.c
 The above output tells us that the service hostname is
 <br/><br/>
 &nbsp;&nbsp;`helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud`.
+
 The hostname for the service follows this general pattern:
 <br/><br/>
 &nbsp;&nbsp;*service-name*.*service-namespace*.*domain*
