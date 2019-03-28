@@ -8,9 +8,8 @@ This lab focuses on these traffic management capabilities of Knative.
 ## Objectives
 
 In this lab you'll learn
-* How to roll out a new version of an application
-* How to roll back to an earlier version of an application
-*
+* How to roll out a new revision of an application
+* How to roll back to an earlier revision of an application
 
 
 ## Prerequistes
@@ -322,5 +321,29 @@ Hello Go Sample v1!
 ### Roll forward to latest version of the application
 
 What if testing went well and you want to route all users to the new revision?
-In that case you can edit the service yaml, change the `revisions` list to contain only the latest revision, and apply it again.
+In that case you can edit the service's yaml and change the revisions list and rolloutPercent from this:
+
+```
+    revisions:
+    - helloworld-go-00001
+    - helloworld-go-00002
+    rolloutPercent: 50
+```
+
+to this:
+
+```
+    revisions:
+    - helloworld-go-00002
+    rolloutPercent: 0
+```
+
 All traffic will be routed to the latest revision of the service.
+
+```
+$ curl helloworld-go.default.mycluster-gd.us-east.containers.appdomain.cloud
+Hello and have a wonderful day!
+
+$ curl helloworld-go.default.mycluster-gd.us-east.containers.appdomain.cloud
+Hello and have a super day!
+```
