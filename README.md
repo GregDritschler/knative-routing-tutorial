@@ -116,12 +116,12 @@ The above output tells us that the service hostname is
 
 The hostname for the service follows this general pattern:
 <br/><br/>
-&nbsp;&nbsp;*service-name*.*service-namespace*.*domain*
+&nbsp;&nbsp;*service-name*.*service-namespace*.*ingress-subdomain*
 
 The *service name* and *service-namespace* are determined from the service yaml file.
 In this case the yaml did not specify a namespace and so the `default` namespace is used.
 
-The ingress subdomain is a public URL providing access to your cluster. 
+The *ingress subdomain* is a public URL providing access to your cluster. 
 You may see a different name depending on what you named your cluster and where it is located.
 
 Now you can curl the helloworld application.  Substitute your service name in the curl command below.
