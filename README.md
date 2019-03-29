@@ -220,6 +220,8 @@ $ curl helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
 Hello Go Sample v1!
 ```
 
+### Monitoring traffic using Grafana
+
 The Knative installation includes Prometheus and Grafana.
 Prometheus is an open-source monitoring tool that can scrape and store multi-dimensional time series data.
 Grafana is a metrics analysis platform which allows you to visualize your metrics data through graphs and dashboards.
@@ -250,6 +252,10 @@ for i in `seq 1 5000`; do curl helloworld-go.default.mycluster6.us-south.contain
 You should see traffic being split evenly between revisions 1 and 2 in the `Request Volume By Revision` dashboard.
 
 ![grafana](doc/source/images/grafana.png)
+
+Keep the grafana window open since we'll return to it later in the tutorial.
+
+### Additional service hostnames in release mode
 
 When using the service release mode, additional service hostnames are created for accessing specific revisions.
 You can see these hostnames by using the following command.
@@ -318,6 +324,10 @@ $ curl helloworld-go.default.mycluster6.us-south.containers.appdomain.cloud
 Hello Go Sample v1!
 ```
 
+In your grafana window you should see traffic shift completely to revision 1.
+
+![grafana](doc/source/images/grafana2.png)
+
 ### Roll forward to latest version of the application
 
 What if testing went well and you want to route all users to the new revision?
@@ -347,3 +357,7 @@ Hello and have a wonderful day!
 $ curl helloworld-go.default.mycluster-gd.us-east.containers.appdomain.cloud
 Hello and have a super day!
 ```
+
+In your grafana window you should see traffic shift completely to revision 2.
+
+![grafana](doc/source/images/grafana3.png)
